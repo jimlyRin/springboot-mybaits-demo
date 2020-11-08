@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.springbootmybatis.dao.UserDAO">
+
+    <sql id="tablename">t_user</sql>
+    <sql id="columns">id, firstname, lastname</sql>
+
+    <select id="getCount" resultType="int">
+        SELECT count(1) num FROM <include refid="tablename" />
+    </select>
+
+    <!-- 根据传入PK的值，到数据库中查询记录 -->
+    <select id="getById" parameterType="java.lang.Long" resultType="com.example.demo.springbootmybatis.entity.User">
+        SELECT <include refid="columns" />
+        FROM <include refid="tablename" /> WHERE id = #{id}
+    </select>
+
+    <!-- 按fisrtName进行模糊查询 -->
+    <select id="queryByFirstName" parameterType="com.example.demo.springbootmybatis.entity.User" resultType="com.example.demo.springbootmybatis.entity.User">
+        SELECT <include refid="columns"></include>
+        FROM <include refid="tablename" />
+        <where>
+            <if test="firstname != null">firstname like '%' #{firstName} '%'</if>
+        </where>
+    </select>
+
+    <!-- 分页查询 -->
+    <select id="queryByOffsetLimit" parameterType="map" resultType="com.example.demo.springbootmybatis.entity.User">
+        SELECT <include refid="columns" />
+        FROM <include refid="tablename" />
+        ORDER BY id ASC
+        <if test="offset != null and limit != null"> LIMIT #{offset}, #{limit} </if>
+    </select>
+
+    <!-- 创建记录，并写入到数据表中 -->
+    <!-- 写入新记录并返回主键值，注意，这里的KeyProperty应该是Java类里的属性名称，而非数据表中的字段名 -->
+    <insert id="insert" parameterType="com.example.demo.springbootmybatis.entity.User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO <include refid="tablename" />
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null"> id, </if>
+            <if test="firstname != null"> firstname, </if>
+            <if test="lastname != null"> lastname, </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null"> #{id,jdbcType=BIGINT}, </if>
+            <if test="firstname != null"> #{firstname,jdbcType=VARCHAR}, </if>
+            <if test="lastname != null"> #{lastname,jdbcType=VARCHAR}, </if>
+        </trim>
+    </insert>
+
+    <!-- 更新记录，并写回到数据表中 -->
+    <update id="update" parameterType="com.example.demo.springbootmybatis.entity.User">
+        UPDATE <include refid="tablename" />
+        <set>
+            <if test="firstname != null"> firstname = #{firstname, jdbcType=VARCHAR}, </if>
+            <if test="lastname != null"> lastname = #{lastname, jdbcType=VARCHAR}, </if>
+        </set>
+        WHERE id = #{id, jdbcType=BIGINT}
+    </update>
+
+    <!-- 根据传入PK的值，删除单条记录 -->
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE FROM <include refid="tablename" /> WHERE id = #{id, jdbcType=BIGINT}
+    </delete>
+
+    <!-- 根据传入PK的值列表，删除多条记录 -->
+    <delete id="deleteBatch" parameterType="java.util.List">
+        DELETE FROM <include refid="tablename" /> WHERE id in
+        <foreach collection="list" item="item" index="index" open="(" close=")" separator=",">
+            #{item, jdbcType=BIGINT}
+        </foreach>
+    </delete>
+</mapper>
